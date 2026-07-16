@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#142d49">
+  <title>Sol do Sertão: A Sanfona Dourada</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div><small>AVENTURA BRASILEIRA EM PIXEL ART</small><h1>SOL DO SERTÃO</h1></div>
+      <div class="header-actions">
+        <button id="sound" type="button">SOM: ON</button>
+        <button id="pause" type="button">PAUSAR</button>
+      </div>
+    </header>
+
+    <section class="frame">
+      <canvas id="game" width="960" height="540" tabindex="0" aria-label="Jogo Sol do Sertão"></canvas>
+
+      <div id="menu" class="overlay show">
+        <article class="card hero-card">
+          <span class="tag">QUATRO FASES • UM GRANDE FINAL</span>
+          <h2>A Sanfona<br><em>Dourada</em></h2>
+          <p>Ajude Ravi a recuperar as notas mágicas e libertar o guardião do sertão.</p>
+          <button id="start" class="primary" type="button">COMEÇAR A JORNADA</button>
+          <div class="keys"><span><b>A D</b> ANDAR</span><span><b>W / ESPAÇO</b> PULAR</span><span><b>X</b> TOCAR</span></div>
+        </article>
+      </div>
+
+      <div id="story" class="overlay">
+        <article class="card story-card">
+          <span id="storyNumber" class="tag">FASE 1</span>
+          <h2 id="storyTitle">Vila do Mandacaru</h2>
+          <p id="storyText"></p>
+          <button id="continue" class="primary" type="button">ENTRAR NA FASE</button>
+        </article>
+      </div>
+
+      <div id="ending" class="overlay">
+        <article class="card story-card">
+          <span class="tag">JORNADA COMPLETA</span>
+          <h2>Arretado!</h2>
+          <p id="endingText"></p>
+          <button id="again" class="primary" type="button">JOGAR NOVAMENTE</button>
+        </article>
+      </div>
+
+      <div id="paused" class="pause-label">PAUSADO</div>
+
+      <div class="touch" aria-label="Controles para celular">
+        <div><button data-key="left">◀</button><button data-key="right">▶</button></div>
+        <div><button data-key="action" class="action">♫</button><button data-key="jump" class="jump">▲</button></div>
+      </div>
+    </section>
+
+    <footer><span>RAVI E A SANFONA DOURADA</span><span>HTML • CSS • JAVASCRIPT</span></footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
