@@ -8,6 +8,37 @@
   const H = canvas.height;
   const GROUND = 445;
 
+  const sprites = {
+    idle1: new Image(),
+    idle2: new Image(),
+    walk1: new Image(),
+    walk2: new Image(),
+    walk3: new Image(),
+    walk4: new Image(),
+    stick: new Image(),
+    coffee: new Image(),
+    caju: new Image(),
+    beetle1: new Image(),
+    beetle2: new Image(),
+    acaraje1: new Image(),
+    acaraje2: new Image(),
+    acarajeProjectile: new Image(),
+  };
+  sprites.idle1.src = 'assets/sprites/ravi-idle-1.png';
+  sprites.idle2.src = 'assets/sprites/ravi-idle-2.png';
+  sprites.walk1.src = 'assets/sprites/ravi-walk-1.png';
+  sprites.walk2.src = 'assets/sprites/ravi-walk-2.png';
+  sprites.walk3.src = 'assets/sprites/ravi-walk-3.png';
+  sprites.walk4.src = 'assets/sprites/ravi-walk-4.png';
+  sprites.stick.src = 'assets/sprites/graveto.png';
+  sprites.coffee.src = 'assets/items/cafe.png';
+  sprites.caju.src = 'assets/items/caju.png';
+  sprites.beetle1.src = 'assets/enemies/besouro-1.png';
+  sprites.beetle2.src = 'assets/enemies/besouro-2.png';
+  sprites.acaraje1.src = 'assets/bosses/acaraje-1.png';
+  sprites.acaraje2.src = 'assets/bosses/acaraje-2.png';
+  sprites.acarajeProjectile.src = 'assets/items/acaraje-projetil.png';
+
   const ui = {
     menu: $('#menu'),
     story: $('#story'),
@@ -58,9 +89,9 @@
       sky: '#71d3dc',
       ground: '#bd6f35',
       platforms: [
-        [290,365,165,'bounce'],[570,300,145],[830,235,140],[1110,345,185,'bounce'],
-        [1430,275,150],[1700,355,180],[2000,285,155,'bounce'],[2300,220,145],
-        [2600,340,180],[2920,265,160,'bounce'],[3260,330,170],
+        [290,365,165],[570,300,145],[830,235,140],[1110,345,185],
+        [1430,275,150],[1700,355,180],[2000,285,155],[2300,220,145],
+        [2600,340,180],[2920,265,160],[3260,330,170],
       ],
       movingPlatforms: [[970,205,110,120,0],[1850,220,110,0,80],[2760,205,110,110,0]],
       coins: [[365,325],[640,260],[900,195],[1195,305],[1500,235],[1780,315],[2075,245],[2370,180],[2680,300],[3000,225],[3340,290],[3520,395]],
@@ -70,9 +101,9 @@
       hazards: [[1360,55],[3120,60]],
     },
     {
-      name: 'Chapada Diamantina',
-      subtitle: 'HARD - Paredões do Vento',
-      story: 'A terceira nota está entre paredões, grutas e quedas d’água inspiradas na Chapada Diamantina. Use dash, café e plataformas móveis para vencer o vento forte.',
+      name: 'Engenho da Rapadura',
+      subtitle: 'HARD - Serra da Rapadura',
+      story: 'A terceira nota está no caminho do engenho: cana-de-açúcar, melaço e rapadura cercam os paredões da serra. Use dash, café e plataformas móveis para vencer o vento forte.',
       difficulty: 'HARD',
       theme: 'chapada',
       width: 3900,
@@ -93,8 +124,8 @@
     },
     {
       name: 'Cozinha do Arraiá',
-      subtitle: 'BOSS - Cuscuz Paulista Encantado',
-      story: 'Na cozinha do arraiá, um Cuscuz Paulista visitante da Festa das Receitas foi encantado pelo redemoinho. Enfrente azeitonas saltitantes, ondas de milho e liberte a última nota com o seu graveto.',
+      subtitle: 'BOSS - Acarajé Encantado',
+      story: 'Na cozinha do arraiá, o Acarajé Encantado guardou a última nota. Desvie dos temperos e liberte essa delícia baiana com o seu graveto.',
       difficulty: 'BOSS',
       theme: 'kitchen',
       width: 2200,
@@ -205,10 +236,10 @@
     enemyProjectiles = [];
     boss = level.boss ? {
       x: 1770, y: GROUND - 108, w: 128, h: 108,
-      vx: -115, vy: 0, grounded: true,
-      hp: 16, maxHp: 16, flash: 0,
-      throwCooldown: 1.4, jumpCooldown: 2.5,
-      attackPhase: 0, active: false,
+      vx: -82, vy: 0, grounded: true,
+      hp: 8, maxHp: 8, flash: 0,
+      throwCooldown: 2.2, jumpCooldown: 3.2,
+      attackPhase: 0, active: false, startDelay: 0,
     } : null;
 
     Object.assign(player, {
@@ -239,7 +270,7 @@
     if (level.boss) {
       notes = 4;
       mode = 'ending';
-      $('#endingText').textContent = `Ravi libertou o Cuscuz Paulista Encantado, recuperou as quatro notas e levou a música de volta ao arraiá. Pontuação final: ${score}.`;
+      $('#endingText').textContent = `Ravi libertou o Acarajé Encantado, recuperou as quatro notas e levou a música de volta ao arraiá. Pontuação final: ${score}.`;
       showOverlay(ui.ending);
       tone(659, 0.35);
       return;
@@ -390,16 +421,11 @@
         player.x + player.w > surface.x && player.x < surface.x + surface.w
       ) {
         player.y = surface.y - player.h;
-        if (surface.kind === 'bounce') {
-          player.vy = boosted ? -820 : -760;
-          tone(590, 0.07);
-        } else {
-          player.vy = 0;
-          player.grounded = true;
-          if (surface.moving) {
-            player.x += surface.dx || 0;
-            player.y += surface.dy || 0;
-          }
+        player.vy = 0;
+        player.grounded = true;
+        if (surface.moving) {
+          player.x += surface.dx || 0;
+          player.y += surface.dy || 0;
         }
       }
     }
@@ -467,8 +493,13 @@
     if (!boss.active) {
       if (player.x < 1240) return;
       boss.active = true;
+      boss.startDelay = 1.25;
       shake = 0.22;
       tone(145, 0.18, 'sawtooth');
+    }
+    if (boss.startDelay > 0) {
+      boss.startDelay -= dt;
+      return;
     }
     boss.flash = Math.max(0, boss.flash - dt);
     boss.attackPhase = 1 - boss.hp / boss.maxHp;
@@ -476,12 +507,12 @@
     boss.jumpCooldown -= dt;
 
     if (boss.grounded) {
-      boss.x += boss.vx * dt * (1 + boss.attackPhase * 0.55);
+      boss.x += boss.vx * dt * (1 + boss.attackPhase * 0.25);
       if (boss.x < 1350 || boss.x + boss.w > 2110) boss.vx *= -1;
       if (boss.jumpCooldown <= 0) {
-        boss.vy = -560 - boss.attackPhase * 110;
+        boss.vy = -500 - boss.attackPhase * 55;
         boss.grounded = false;
-        boss.jumpCooldown = Math.max(1.45, 2.6 - boss.attackPhase);
+        boss.jumpCooldown = Math.max(2.3, 3.3 - boss.attackPhase * 0.6);
       }
     } else {
       boss.x += boss.vx * 0.55 * dt;
@@ -492,24 +523,33 @@
         boss.vy = 0;
         boss.grounded = true;
         shake = 0.28;
+        burst(boss.x + boss.w / 2, GROUND - 8, '#f0ad38', 18);
+        tone(115, 0.12, 'sawtooth');
         for (const direction of [-1, 1]) {
-          enemyProjectiles.push({ x: boss.x + boss.w / 2, y: GROUND - 20, w: 28, h: 16, vx: direction * (250 + boss.attackPhase * 110), vy: 0, life: 3, kind: 'corn' });
+          enemyProjectiles.push({
+            x: boss.x + boss.w / 2, y: GROUND - 30,
+            w: 32, h: 30,
+            vx: direction * (190 + boss.attackPhase * 55), vy: 0,
+            life: 2.4, kind: 'acaraje-ground', angle: 0, trailTimer: 0,
+          });
         }
       }
     }
 
     if (boss.throwCooldown <= 0) {
-      boss.throwCooldown = Math.max(0.55, 1.35 - boss.attackPhase * 0.65);
+      boss.throwCooldown = Math.max(1.05, 1.9 - boss.attackPhase * 0.6);
       const dx = player.x - boss.x;
       const dy = player.y - boss.y;
       const length = Math.hypot(dx, dy) || 1;
       enemyProjectiles.push({
         x: boss.x + boss.w / 2, y: boss.y + 35,
-        w: 20, h: 20,
-        vx: dx / length * (275 + boss.attackPhase * 80),
-        vy: dy / length * (275 + boss.attackPhase * 80),
-        life: 4, kind: 'olive',
+        w: 27, h: 27,
+        vx: dx / length * (215 + boss.attackPhase * 45),
+        vy: dy / length * (215 + boss.attackPhase * 45),
+        life: 3.2, kind: 'acaraje-flying', angle: 0, trailTimer: 0,
       });
+      burst(boss.x + boss.w / 2, boss.y + 45, '#ffd05a', 7);
+      tone(280, 0.055);
     }
 
     if (player.attackTimer > 0 && !player.attackHit && overlaps(attackBox(), boss)) {
@@ -536,9 +576,33 @@
     for (const projectile of enemyProjectiles) {
       projectile.x += projectile.vx * dt;
       projectile.y += projectile.vy * dt;
+      const spinDirection = projectile.kind === 'acaraje-ground' ? Math.sign(projectile.vx) || 1 : 1;
+      projectile.angle = (projectile.angle || 0) + dt * (projectile.kind === 'acaraje-ground' ? 10 : 6) * spinDirection;
+      projectile.trailTimer = (projectile.trailTimer || 0) - dt;
+      if (projectile.trailTimer <= 0) {
+        projectile.trailTimer = projectile.kind === 'acaraje-ground' ? 0.08 : 0.055;
+        particles.push({
+          x: projectile.x + projectile.w / 2,
+          y: projectile.y + projectile.h / 2,
+          vx: -projectile.vx * 0.08 + (Math.random() - 0.5) * 18,
+          vy: projectile.kind === 'acaraje-ground' ? -35 : 10,
+          life: 0.28,
+          color: projectile.kind === 'acaraje-ground' ? '#e18b2f' : '#ffd15c',
+          size: 3 + Math.random() * 3,
+        });
+      }
       projectile.life -= dt;
+      if (player.attackTimer > 0 && overlaps(attackBox(), projectile)) {
+        projectile.life = 0;
+        score += 35;
+        burst(projectile.x, projectile.y, '#ffe08a', 8);
+        tone(410, 0.045);
+        continue;
+      }
       if (overlaps(player, projectile)) {
         projectile.life = 0;
+        burst(projectile.x, projectile.y, '#f4b43e', 10);
+        shake = Math.max(shake, 0.14);
         if (player.dashTimer <= 0) hurt();
       }
     }
@@ -627,30 +691,131 @@
     rect(x + w - 30, y - h + 50, 12, h - 60, '#b97145');
   }
 
+  function drawBird(x, y, scale = 1) {
+    ctx.strokeStyle = 'rgba(47,57,63,.65)';
+    ctx.lineWidth = 2 * scale;
+    ctx.beginPath();
+    ctx.arc(x, y, 8 * scale, Math.PI * 1.08, Math.PI * 1.9);
+    ctx.arc(x + 14 * scale, y, 8 * scale, Math.PI * 1.1, Math.PI * 1.92);
+    ctx.stroke();
+  }
+
+  function drawFence(x, y, width) {
+    for (let post = 0; post <= width; post += 54) {
+      rect(x + post, y - 43, 7, 43, '#815036');
+      rect(x + post - 3, y - 47, 13, 6, '#b57945');
+    }
+    rect(x, y - 34, width, 6, '#9b603c');
+    rect(x, y - 15, width, 6, '#70432f');
+  }
+
+  function drawCistern(x, y) {
+    rect(x, y - 46, 65, 46, '#d7c197');
+    rect(x + 5, y - 52, 55, 9, '#f0d8aa');
+    rect(x + 47, y - 76, 6, 28, '#6e4732');
+    rect(x + 38, y - 80, 24, 5, '#8b5a39');
+    rect(x + 13, y - 28, 38, 5, '#b19a75');
+    rect(x + 13, y - 15, 38, 5, '#b19a75');
+  }
+
+  function drawJuazeiro(x, y) {
+    rect(x + 28, y - 86, 13, 86, '#75452e');
+    rect(x + 9, y - 77, 25, 9, '#75452e');
+    rect(x + 37, y - 65, 28, 9, '#75452e');
+    ctx.fillStyle = '#4b8447';
+    ctx.beginPath();
+    ctx.ellipse(x + 31, y - 98, 47, 31, 0, 0, Math.PI * 2);
+    ctx.ellipse(x + 3, y - 82, 30, 25, 0, 0, Math.PI * 2);
+    ctx.ellipse(x + 63, y - 78, 33, 25, 0, 0, Math.PI * 2);
+    ctx.fill();
+    rect(x + 18, y - 106, 8, 6, '#7fa34d');
+    rect(x + 52, y - 91, 7, 6, '#7fa34d');
+  }
+
+  function drawMarketCrates(x, y) {
+    rect(x, y - 28, 46, 28, '#9d6038');
+    rect(x + 4, y - 24, 38, 5, '#d18b49');
+    rect(x + 4, y - 10, 38, 5, '#d18b49');
+    for (let fruit = 0; fruit < 4; fruit++) {
+      rect(x + 7 + fruit * 9, y - 34 - (fruit % 2) * 3, 8, 8, fruit % 2 ? '#e3a832' : '#cb4e32');
+    }
+    rect(x + 57, y - 20, 22, 20, '#a65335');
+    rect(x + 53, y - 24, 30, 7, '#d98d47');
+  }
+
+  function drawEngenhoWheel(x, y) {
+    ctx.strokeStyle = '#6e412d';
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.arc(x, y - 40, 38, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.lineWidth = 4;
+    for (let spoke = 0; spoke < 8; spoke++) {
+      const angle = spoke * Math.PI / 4;
+      ctx.beginPath();
+      ctx.moveTo(x, y - 40);
+      ctx.lineTo(x + Math.cos(angle) * 35, y - 40 + Math.sin(angle) * 35);
+      ctx.stroke();
+    }
+    rect(x - 8, y - 48, 16, 16, '#c47a37');
+  }
+
   function drawKitchenDecor() {
     for (let x = -(cameraX * 0.28 % 96); x < W; x += 96) {
-      rect(x, 255, 94, 190, '#e9c277');
+      rect(x, 244, 94, 201, '#e9c277');
       rect(x + 46, 255, 3, 190, '#b0523d');
       for (let y = 270; y < 430; y += 48) rect(x, y, 94, 3, '#b0523d');
       rect(x + 17, 280, 16, 16, '#4b8c86');
       rect(x + 63, 328, 16, 16, '#d7523a');
     }
+    rect(0, 226, W, 12, '#684332');
+    for (let x = 40 - (cameraX * 0.2 % 230); x < W; x += 230) {
+      rect(x, 183, 112, 10, '#704531');
+      rect(x + 10, 193, 26, 28, '#b65b38');
+      rect(x + 16, 186, 14, 7, '#e09b4a');
+      rect(x + 52, 198, 34, 20, '#557f72');
+      rect(x + 59, 192, 20, 7, '#efc75e');
+    }
     rect(0, 405, W, 40, '#70412f');
+    rect(30 - (cameraX * 0.35 % 540), 342, 116, 63, '#9b5838');
+    rect(47 - (cameraX * 0.35 % 540), 319, 82, 28, '#c56f3d');
+    rect(78 - (cameraX * 0.35 % 540), 363, 24, 42, '#392e27');
   }
 
   function drawBackground() {
-    rect(0, 0, W, H, level.sky);
-    const sunset = level.theme === 'kitchen' ? '#ffd377' : '#ffd14b';
-    rect(735 - cameraX * 0.04, 54, 74, 74, sunset);
-    for (let i = 0; i < 7; i++) drawCloud(i * 390 - (cameraX * 0.16 % 2730) - 80, 72 + (i % 3) * 37, 0.9);
+    const kitchen = level.theme === 'kitchen';
+    rect(0, 0, W, H, kitchen ? '#82638d' : '#6bc4d5');
+    rect(0, 155, W, 125, kitchen ? '#a9788f' : '#93d7db');
+    rect(0, 280, W, GROUND - 280, kitchen ? '#e1a06b' : '#efd278');
 
-    for (let i = 0; i < 10; i++) {
-      const x = i * 370 - (cameraX * 0.38 % 3700) - 110;
-      ctx.fillStyle = level.theme === 'chapada' ? '#735e43' : level.theme === 'kitchen' ? '#4b486c' : '#568a49';
+    const sunX = 760 - cameraX * 0.035;
+    const sunY = kitchen ? 92 : 78;
+    ctx.fillStyle = kitchen ? 'rgba(255,190,104,.22)' : 'rgba(255,224,111,.25)';
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, 58, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = kitchen ? '#ffd08a' : '#ffd653';
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, 39, 0, Math.PI * 2);
+    ctx.fill();
+
+    for (let i = 0; i < 6; i++) drawCloud(i * 430 - (cameraX * 0.12 % 2580) - 100, 58 + (i % 3) * 42, 0.82);
+    drawBird(190 - cameraX * 0.08, 128, 0.8);
+    drawBird(540 - cameraX * 0.05, 176, 0.6);
+
+    const farColor = level.theme === 'chapada' ? '#b28662' : kitchen ? '#71536f' : '#8eb178';
+    ctx.fillStyle = farColor;
+    for (let i = -1; i < 7; i++) {
+      const x = i * 210 - (cameraX * 0.12 % 210);
       ctx.beginPath();
-      ctx.moveTo(x, GROUND);
-      ctx.lineTo(x + 180, 230 + (i % 2) * 36);
-      ctx.lineTo(x + 370, GROUND);
+      ctx.ellipse(x + 130, GROUND + 34, 170, 112 + (i % 2) * 20, 0, Math.PI, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = level.theme === 'chapada' ? '#8c684f' : kitchen ? '#644c69' : '#739657';
+    for (let i = -1; i < 6; i++) {
+      const x = i * 280 - (cameraX * 0.23 % 280);
+      ctx.beginPath();
+      ctx.ellipse(x + 155, GROUND + 28, 205, 98 + (i % 2) * 24, 0, Math.PI, Math.PI * 2);
       ctx.fill();
     }
 
@@ -664,21 +829,41 @@
       for (let x = 170; x < level.width; x += 690) {
         drawTaipaHouse(x - cameraX, 342, x % 3 ? '#efb454' : '#7eb4a3', x % 2 ? '#c64f32' : '#d98535');
         drawCactus(x - cameraX + 155, GROUND);
-        rect(x - cameraX + 250, GROUND - 42, 29, 42, '#a45d37');
-        rect(x - cameraX + 244, GROUND - 47, 41, 9, '#d7934f');
+        drawCistern(x - cameraX + 245, GROUND);
+        drawFence(x - cameraX + 330, GROUND, 165);
+        drawJuazeiro(x - cameraX + 535, GROUND);
       }
     } else if (level.theme === 'market') {
       drawCordelLine(-(cameraX * 0.08 % 48), 82);
       drawCordelLine(22 - (cameraX * 0.12 % 48), 137);
       const colors = ['#d95438','#edba3b','#438e91','#775287'];
-      for (let x = 120; x < level.width; x += 410) drawMarketStall(x - cameraX, 352, colors[Math.floor(x / 410) % colors.length]);
+      for (let x = 120; x < level.width; x += 410) {
+        drawMarketStall(x - cameraX, 352, colors[Math.floor(x / 410) % colors.length]);
+        drawMarketCrates(x - cameraX + 176, GROUND);
+      }
     } else if (level.theme === 'chapada') {
       for (let x = 160; x < level.width; x += 520) {
         drawChapadaRock(x - cameraX, GROUND, 150, 120 + (Math.floor(x / 520) % 2) * 55);
+        for (let cane = 0; cane < 4; cane++) {
+          const caneX = x - cameraX + 190 + cane * 9;
+          rect(caneX, GROUND - 72 + (cane % 2) * 8, 6, 72 - (cane % 2) * 8, '#4f954c');
+          rect(caneX - 3, GROUND - 72 + (cane % 2) * 8, 12, 7, '#79b457');
+        }
+        rect(x - cameraX + 220, GROUND - 24, 34, 20, '#8d4b2f');
+        rect(x - cameraX + 224, GROUND - 28, 26, 7, '#d68b45');
+        if (Math.floor(x / 520) % 2 === 0) drawEngenhoWheel(x - cameraX + 325, GROUND);
         if (Math.floor(x / 520) % 3 === 1) {
           rect(x - cameraX + 150, 210, 18, 235, '#5ec7df');
           rect(x - cameraX + 168, 210, 7, 235, '#c4eff4');
         }
+      }
+    } else if (level.theme === 'kitchen') {
+      drawCordelLine(-(cameraX * 0.07 % 48), 86);
+      for (let x = 165; x < level.width; x += 520) {
+        rect(x - cameraX, GROUND - 52, 104, 52, '#815039');
+        rect(x - cameraX - 8, GROUND - 59, 120, 10, '#c98543');
+        rect(x - cameraX + 15, GROUND - 83, 74, 25, '#d89a4d');
+        rect(x - cameraX + 31, GROUND - 89, 42, 8, '#f0c267');
       }
     }
   }
@@ -701,9 +886,9 @@
     for (const platform of platforms) {
       const x = platform.x - cameraX;
       if (x > W || x + platform.w < 0) continue;
-      const color = platform.kind === 'bounce' ? '#d74f3e' : platform.moving ? '#418b91' : '#855033';
+      const color = platform.moving ? '#418b91' : '#855033';
       rect(x, platform.y, platform.w, platform.h, color);
-      rect(x, platform.y, platform.w, 7, platform.kind === 'bounce' ? '#ffd248' : '#efb34c');
+      rect(x, platform.y, platform.w, 7, '#efb34c');
       for (let mark = x + 9; mark < x + platform.w; mark += 29) rect(mark, platform.y + 11, 11, 5, 'rgba(61,34,28,.45)');
       if (platform.moving) {
         rect(x + 8, platform.y + platform.h, 4, 12, '#4e392c');
@@ -715,6 +900,10 @@
   function drawCoin(coin) {
     const x = coin.x - cameraX;
     const y = coin.y + Math.sin(elapsed * 5 + coin.phase) * 4;
+    if (sprites.caju.complete && sprites.caju.naturalWidth > 0) {
+      ctx.drawImage(sprites.caju, x - 16, y - 16, 32, 32);
+      return;
+    }
     rect(x - 8, y - 12, 16, 24, '#df592d');
     rect(x - 12, y - 8, 24, 16, '#df592d');
     rect(x - 4, y - 9, 8, 18, '#ffc83d');
@@ -725,6 +914,10 @@
   function drawCoffee(coffee) {
     const x = coffee.x - cameraX;
     const y = coffee.y + Math.sin(elapsed * 4 + coffee.phase) * 3;
+    if (sprites.coffee.complete && sprites.coffee.naturalWidth > 0) {
+      ctx.drawImage(sprites.coffee, x - 18, y - 20, 36, 36);
+      return;
+    }
     rect(x - 11, y - 17, 24, 24, '#fff0d0');
     rect(x - 8, y - 13, 18, 16, '#77422e');
     rect(x + 13, y - 12, 7, 12, '#fff0d0');
@@ -738,6 +931,12 @@
   function drawEnemy(enemy) {
     const x = enemy.x - cameraX;
     const y = enemy.y;
+    // Cada desenho já aponta para um lado: 1 = direita, 2 = esquerda.
+    const beetle = enemy.vx >= 0 ? sprites.beetle1 : sprites.beetle2;
+    if (beetle.complete && beetle.naturalWidth > 0) {
+      ctx.drawImage(beetle, x, y - 5, 38, 38);
+      return;
+    }
     rect(x + 5, y + 3, 28, 24, '#a95431');
     rect(x, y + 10, 38, 14, '#a95431');
     rect(x + 7, y, 9, 7, '#ee9941');
@@ -766,54 +965,63 @@
 
   function drawPlayer() {
     if (player.invincible > 0 && Math.floor(player.invincible * 12) % 2 === 0) return;
-    const idle = player.grounded && Math.abs(player.vx) < 7 && player.dashTimer <= 0;
-    const bob = 0;
-    const hatLift = idle ? Math.round(Math.sin(elapsed * 3.2)) : 0;
+    const attacking = player.attackTimer > 0;
+    const walking = player.grounded && Math.abs(player.vx) >= 10 && player.dashTimer <= 0 && !attacking;
+    const idle = player.grounded && !walking && player.dashTimer <= 0;
     const x = player.x - cameraX;
-    const y = player.y + bob;
+    const y = player.y;
     ctx.save();
     if (player.facing < 0) { ctx.translate(x + player.w, 0); ctx.scale(-1, 1); } else ctx.translate(x, 0);
     if (player.dashTimer > 0) {
-      rect(-20, y + 16, 27, 6, 'rgba(105,207,225,.65)');
-      rect(-32, y + 29, 38, 5, 'rgba(255,228,146,.48)');
+      rect(-34, y + 12, 42, 7, 'rgba(105,207,225,.68)');
+      rect(-50, y + 27, 58, 6, 'rgba(255,228,146,.5)');
+      rect(-24, y + 41, 30, 4, 'rgba(105,207,225,.45)');
     }
-    if (idle) {
+    if (idle && !attacking) {
       rect(0, y + 39, 4, 4, 'rgba(255,243,208,.7)');
       rect(35, y + 31, 3, 3, 'rgba(255,207,74,.9)');
     }
-    // Chapéu de palha.
-    rect(3, y + hatLift, 27, 7, '#bd8439');
-    rect(9, y - 7 + hatLift, 16, 9, '#dfa54e');
-    rect(11, y - 1 + hatLift, 14, 3, '#8a4b2f');
-    // Rosto e cabelo.
-    rect(7, y + 7, 22, 19, '#9b593c');
-    rect(24, y + 12, 7, 9, '#37261f');
-    rect(12, y + 14, 4, 4, '#fff3d0');
-    rect(14, y + 15, 3, 3, '#142d49');
-    // Camisa de algodão, lenço e mochila.
-    rect(4, y + 25, 27, 18, '#efe3bd');
-    rect(3, y + 28, 6, 17, '#9b593c');
-    rect(30, y + 29, 6, 14, '#9b593c');
-    rect(4, y + 25, 27, 5, '#dc5732');
-    rect(28, y + 25, 10, 18, '#7d9a49');
-    rect(1, y + 31, 5, 5, '#f1b93d');
-    // Calça azul e sandálias de couro alinhadas ao chão.
-    rect(8, y + 43, 9, 8, '#25517c');
-    rect(21, y + 43, 9, 8, '#25517c');
-    rect(5, y + 49, 13, 5, '#66392d');
-    rect(20, y + 49, 13, 5, '#66392d');
-    // Graveto.
-    if (player.attackTimer > 0) {
-      const swing = 1 - player.attackTimer / 0.22;
-      ctx.save();
-      ctx.translate(31, y + 30);
-      ctx.rotate(-1.15 + swing * 2.1);
-      rect(0, -3, 53, 6, '#70422b');
-      rect(46, -5, 9, 10, '#4f8e46');
-      ctx.restore();
+    if (player.coffeeTimer > 0) {
+      rect(-8, y - 5, 51, 62, 'rgba(255,200,74,.15)');
+      rect(-3, y - 9, 4, 4, 'rgba(255,224,118,.72)');
+      rect(38, y + 7, 3, 3, 'rgba(255,224,118,.65)');
+    }
+
+    const idleSprite = Math.floor(elapsed / 0.42) % 2 === 0 ? sprites.idle1 : sprites.idle2;
+    const walkSprites = [sprites.walk2, sprites.walk4];
+    const walkOffsets = [-29, -30];
+    const walkFrame = Math.floor(elapsed * (Math.abs(player.vx) > 190 ? 14 : 10)) % walkSprites.length;
+    const walkSprite = walkSprites[walkFrame];
+
+    if (walking && walkSprite.complete && walkSprite.naturalWidth > 0) {
+      ctx.drawImage(walkSprite, walkOffsets[walkFrame], y - 26, 80, 80);
+    } else if (idleSprite.complete && idleSprite.naturalWidth > 0) {
+      // Este mesmo sprite novo também aparece durante o pulo, dash e ataque.
+      ctx.drawImage(idleSprite, -15, y - 14, 68, 68);
     } else {
-      rect(32, y + 18, 4, 30, '#70422b');
-      rect(29, y + 43, 10, 4, '#4f8e46');
+      rect(5, y, 28, 54, '#9b593c');
+    }
+
+    // O graveto gira pelo cabo, sempre preso à mão do personagem.
+    if (!walking && sprites.stick.complete && sprites.stick.naturalWidth > 0) {
+      let stickAngle = player.grounded ? 0.05 : 0.42;
+      if (attacking) {
+        const swing = 1 - player.attackTimer / 0.22;
+        stickAngle = -1.18 + swing * 2.36;
+        ctx.strokeStyle = 'rgba(255,214,92,.46)';
+        ctx.lineWidth = 9;
+        ctx.beginPath();
+        ctx.arc(30, y + 31, 43, -2.7, -0.35);
+        ctx.stroke();
+        const tipX = 30 + Math.sin(stickAngle) * 43;
+        const tipY = y + 31 - Math.cos(stickAngle) * 43;
+        rect(tipX - 3, tipY - 3, 7, 7, 'rgba(255,237,154,.85)');
+      }
+      ctx.save();
+      ctx.translate(30, y + 31);
+      ctx.rotate(stickAngle);
+      ctx.drawImage(sprites.stick, -17, -44, 48, 48);
+      ctx.restore();
     }
     ctx.restore();
   }
@@ -824,26 +1032,25 @@
     const y = boss.y;
     ctx.save();
     if (boss.flash > 0) ctx.globalAlpha = 0.45;
-    // Prato e corpo amarelo do cuscuz paulista encantado.
-    rect(x - 8, y + 91, 144, 15, '#e8e1c4');
-    rect(x + 5, y + 35, 118, 62, '#edbd3d');
-    rect(x + 14, y + 18, 100, 24, '#f5cf53');
-    rect(x + 27, y + 7, 74, 17, '#f8da67');
-    // Tomate, ervilha, ovo e azeitonas como detalhes visuais.
-    rect(x + 17, y + 30, 23, 10, '#d84d34');
-    rect(x + 82, y + 25, 25, 11, '#d84d34');
-    rect(x + 50, y + 19, 20, 14, '#fff1ca');
-    rect(x + 57, y + 22, 8, 8, '#f0b73d');
-    rect(x + 33, y + 53, 10, 10, '#42834a');
-    rect(x + 88, y + 60, 10, 10, '#42834a');
-    // Rosto simpático de chefe encantado.
-    rect(x + 42, y + 49, 11, 11, '#453026');
-    rect(x + 77, y + 49, 11, 11, '#453026');
-    rect(x + 45, y + 51, 4, 4, '#fff3d0');
-    rect(x + 80, y + 51, 4, 4, '#fff3d0');
-    rect(x + 54, y + 72, 25, 7, '#9c4b30');
-    rect(x + 13, y + 94, 25, 11, '#70412e');
-    rect(x + 93, y + 94, 25, 11, '#70412e');
+    const acarajeSprite = Math.floor(elapsed * 3) % 2 === 0 ? sprites.acaraje1 : sprites.acaraje2;
+    if (acarajeSprite.complete && acarajeSprite.naturalWidth > 0) {
+      // Mantém os pés do chefe encostados no chão da arena.
+      ctx.drawImage(acarajeSprite, x - 9, y - 18, 146, 126);
+    } else {
+      rect(x - 8, y + 91, 144, 15, '#e8e1c4');
+      rect(x + 5, y + 35, 118, 62, '#edbd3d');
+      rect(x + 14, y + 18, 100, 24, '#f5cf53');
+      rect(x + 27, y + 7, 74, 17, '#f8da67');
+      rect(x + 17, y + 30, 23, 10, '#d84d34');
+      rect(x + 82, y + 25, 25, 11, '#d84d34');
+      rect(x + 50, y + 19, 20, 14, '#fff1ca');
+      rect(x + 57, y + 22, 8, 8, '#f0b73d');
+      rect(x + 33, y + 53, 10, 10, '#c73f47');
+      rect(x + 88, y + 60, 10, 10, '#c73f47');
+      rect(x + 42, y + 49, 11, 11, '#453026');
+      rect(x + 77, y + 49, 11, 11, '#453026');
+      rect(x + 54, y + 72, 25, 7, '#9c4b30');
+    }
     ctx.restore();
 
     rect(W / 2 - 190, 18, 380, 23, '#142d49');
@@ -851,19 +1058,30 @@
     ctx.fillStyle = '#fff3d0';
     ctx.font = '900 12px Courier New';
     ctx.textAlign = 'center';
-    ctx.fillText('CUSCUZ PAULISTA ENCANTADO', W / 2, 58);
+    ctx.fillText('ACARAJÉ ENCANTADO', W / 2, 58);
+    ctx.font = '900 10px Courier New';
+    ctx.fillText('X / ATAQUE QUEBRA OS ACARAJÉS LANÇADOS', W / 2, 74);
     ctx.textAlign = 'left';
   }
 
   function drawEnemyProjectiles() {
     for (const projectile of enemyProjectiles) {
       const x = projectile.x - cameraX;
-      if (projectile.kind === 'olive') {
-        rect(x, projectile.y, 20, 20, '#3c4f2f');
-        rect(x + 6, projectile.y + 5, 8, 8, '#8f9a49');
+      const flying = projectile.kind === 'acaraje-flying';
+      const projectileSprite = sprites.acarajeProjectile;
+      if (projectileSprite.complete && projectileSprite.naturalWidth > 0) {
+        const size = flying ? 31 : 38;
+        ctx.save();
+        ctx.translate(x + projectile.w / 2, projectile.y + projectile.h / 2);
+        ctx.rotate(projectile.angle || 0);
+        ctx.drawImage(projectileSprite, -size / 2, -size / 2, size, size);
+        ctx.restore();
+      } else if (flying) {
+        rect(x, projectile.y, 27, 27, '#e59b27');
+        rect(x + 5, projectile.y + 5, 17, 17, '#ffd052');
       } else {
-        rect(x, projectile.y + 5, projectile.w, 11, '#f1c445');
-        rect(x + 6, projectile.y, projectile.w - 12, 5, '#ffde68');
+        rect(x, projectile.y + 4, projectile.w, 23, '#c86f20');
+        rect(x + 5, projectile.y, projectile.w - 10, 19, '#f1b536');
       }
     }
   }
@@ -959,18 +1177,23 @@
     const control = button.dataset.key;
     const press = (event) => {
       event.preventDefault();
+      button.setPointerCapture?.(event.pointerId);
       input[control] = true;
       button.classList.add('down');
     };
     const release = (event) => {
       event.preventDefault();
+      if (button.hasPointerCapture?.(event.pointerId)) button.releasePointerCapture(event.pointerId);
       input[control] = false;
       button.classList.remove('down');
     };
     button.addEventListener('pointerdown', press);
     button.addEventListener('pointerup', release);
     button.addEventListener('pointercancel', release);
-    button.addEventListener('pointerleave', release);
+    button.addEventListener('lostpointercapture', release);
+    button.addEventListener('pointerleave', (event) => {
+      if (event.pointerType === 'mouse') release(event);
+    });
   });
 
   $('#start').addEventListener('click', restartJourney);
